@@ -1,0 +1,23 @@
+services:
+  caddy:
+    image: caddy:2
+    container_name: devhelp-caddy
+    restart: unless-stopped
+    environment:
+      DEVHELP_DOMAIN: ${DEVHELP_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

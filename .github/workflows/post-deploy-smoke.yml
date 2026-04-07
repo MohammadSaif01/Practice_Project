@@ -1,0 +1,46 @@
+name: Post Deploy Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["Deploy Render"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Verify Deployed Services
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Validate required URLs
+        run: |
+          if [ -z "${BACKEND_BASE_URL}" ] || [ -z "${FRONTEND_BASE_URL}" ]; then
+            echo "Missing required secrets: BACKEND_BASE_URL and FRONTEND_BASE_URL"
+            exit 1
+          fi
+        env:
+          BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+          FRONTEND_BASE_URL: ${{ secrets.FRONTEND_BASE_URL }}
+
+      - name: Backend health check
+        run: curl -fsS "${BACKEND_BASE_URL}/api/health"
+        env:
+          BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+
+      - name: Backend readiness check
+        run: curl -fsS "${BACKEND_BASE_URL}/api/ready"
+        env:
+          BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+
+      - name: Frontend check
+        run: curl -fsS "${FRONTEND_BASE_URL}"
+        env:
+          FRONTEND_BASE_URL: ${{ secrets.FRONTEND_BASE_URL }}
+
+      - name: Optional Slack alert on failure
+        if: ${{ failure() && secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          payload='{"text":"DevHelp post-deploy smoke test failed for '${GITHUB_REPOSITORY}' on '${GITHUB_REF_NAME}'"}'
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
