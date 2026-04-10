@@ -49,7 +49,7 @@ app.use(
       if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         return callback(null, true);
       }
-      return callback(new Error("Not allowed by CORS"));
+      return callback(null, false);
     },
     credentials: true
   })

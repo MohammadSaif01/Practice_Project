@@ -11,15 +11,18 @@ const hasPlaceholder = (value = "") => {
 };
 
 const parseAllowedOrigins = () => {
-  const defaultOrigins =
-    process.env.NODE_ENV === "production"
-      ? "https://*.onrender.com"
-      : "http://localhost:5173,http://localhost:4173";
-  const rawOrigins = process.env.CLIENT_ORIGIN || defaultOrigins;
-  return rawOrigins
+  const defaultOrigins = [
+    "https://*.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:4173"
+  ];
+
+  const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  return [...new Set([...configuredOrigins, ...defaultOrigins])];
 };
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
