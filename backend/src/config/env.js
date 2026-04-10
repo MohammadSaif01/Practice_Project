@@ -1,5 +1,15 @@
 const requiredKeys = ["MONGO_URI", "JWT_SECRET"];
 
+const hasPlaceholder = (value = "") => {
+  const normalized = String(value).toLowerCase();
+  return (
+    normalized.includes("cluster-url") ||
+    normalized.includes("<db_password>") ||
+    normalized.includes("your_password") ||
+    normalized.includes("replace_with")
+  );
+};
+
 const parseAllowedOrigins = () => {
   const rawOrigins = process.env.CLIENT_ORIGIN || "http://localhost:5173";
   return rawOrigins
@@ -12,6 +22,22 @@ const validateEnv = () => {
   const missing = requiredKeys.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  }
+
+  const mongoUri = process.env.MONGO_URI;
+  if (hasPlaceholder(mongoUri)) {
+    throw new Error(
+      "Invalid MONGO_URI: placeholder detected. Set your real MongoDB Atlas URI in environment variables."
+    );
+  }
+
+  if (!mongoUri.startsWith("mongodb://") && !mongoUri.startsWith("mongodb+srv://")) {
+    throw new Error("Invalid MONGO_URI: must start with mongodb:// or mongodb+srv://");
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (hasPlaceholder(jwtSecret) || jwtSecret.length < 16) {
+    throw new Error("Invalid JWT_SECRET: use a strong random secret with at least 16 characters.");
   }
 };
 
