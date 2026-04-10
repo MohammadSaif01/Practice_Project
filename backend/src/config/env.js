@@ -11,11 +11,35 @@ const hasPlaceholder = (value = "") => {
 };
 
 const parseAllowedOrigins = () => {
-  const rawOrigins = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+  const defaultOrigins =
+    process.env.NODE_ENV === "production"
+      ? "https://*.onrender.com"
+      : "http://localhost:5173,http://localhost:4173";
+  const rawOrigins = process.env.CLIENT_ORIGIN || defaultOrigins;
   return rawOrigins
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const isOriginAllowed = (origin, allowedOrigins) => {
+  return allowedOrigins.some((entry) => {
+    if (entry === "*") {
+      return true;
+    }
+
+    if (entry.includes("*")) {
+      const regexPattern = `^${entry
+        .split("*")
+        .map((segment) => escapeRegex(segment))
+        .join(".*")}$`;
+      return new RegExp(regexPattern).test(origin);
+    }
+
+    return entry === origin;
+  });
 };
 
 const validateEnv = () => {
@@ -42,6 +66,7 @@ const validateEnv = () => {
 };
 
 module.exports = {
+  isOriginAllowed,
   parseAllowedOrigins,
   validateEnv
 };

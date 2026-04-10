@@ -18,7 +18,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: CLIENT_ORIGIN
-        sync: false
+        value: https://*.onrender.com,http://localhost:5173
 
   - type: static
     name: devhelp-frontend
@@ -27,7 +27,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://devhelp-1bu2.onrender.com/api
     routes:
       - type: rewrite
         source: /*

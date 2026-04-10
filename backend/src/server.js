@@ -8,7 +8,7 @@ const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
 
 const connectDB = require("./config/db");
-const { parseAllowedOrigins, validateEnv } = require("./config/env");
+const { isOriginAllowed, parseAllowedOrigins, validateEnv } = require("./config/env");
 const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
 const answerRoutes = require("./routes/answerRoutes");
@@ -46,7 +46,7 @@ const apiLimiter = rateLimit({
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
